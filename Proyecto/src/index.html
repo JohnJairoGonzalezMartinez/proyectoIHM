@@ -46,7 +46,7 @@
             var socket = io();
             socket.on('move', async function(msg) {
                 let index = 0
-                let movementCount = (Math.abs(msg.movement > 0.05)) ? msg.movement / 0.05 : 1
+                let movementCount = (Math.abs(msg.movement) > 0.05) ? Math.abs(msg.movement) / 0.05 : 1
                 let speed = ( msg.speed ) ? (100 / msg.speed) : 100
                 let interval = setInterval( ()=>{
                     for(let i=0; i<4; i++){
