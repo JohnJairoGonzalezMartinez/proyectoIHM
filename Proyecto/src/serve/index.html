@@ -38,13 +38,23 @@
                 animate()
             } )
             camera.position.z = 4
+            let movement = 0
+
+
             const animate = function () {
                 requestAnimationFrame(animate)
                 renderer.render(scene, camera)
+                for(let i in cubes){
+                    cubes[i].rotation.x += movement
+                    cubes[i].rotation.y += Math.sign(movement) * 0.001
+                    cubes[i].rotation.z += Math.sign(movement) * 0.001
+                }
             }
             
             var socket = io();
             socket.on('move', async function(msg) {
+                movement = msg.movement
+                /*
                 let index = 0
                 let movementCount = (Math.abs(msg.movement) > 0.05) ? Math.abs(msg.movement) / 0.05 : 1
                 let speed = ( msg.speed ) ? (100 / msg.speed) : 100
@@ -58,6 +68,7 @@
                         clearInterval(interval)
                     }
                 }, speed )
+                */
             });
         </script>
     </head>
