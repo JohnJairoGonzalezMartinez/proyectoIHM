@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            * {
+            margin: 0;
+            padding: 0;
+            }
+        </style>
+        <title>Proyecto Interacción Hombre-Maquina</title>
+        <script src="/socket.io/socket.io.js"></script>
+        <script type="module">
+            import { OrbitControls } from './src/OrbitControls.js'
+            import * as THREE from './src/three.module.js'
+
+            const scene = new THREE.Scene()
+            const camera = new THREE.PerspectiveCamera(75,window.innerWidth / window.innerHeight,0.1,1000)
+
+            const renderer = new THREE.WebGLRenderer()
+            renderer.setSize(window.innerWidth, window.innerHeight)
+            document.body.appendChild(renderer.domElement)
+
+            const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5)
+            const material = new THREE.MeshBasicMaterial()
+            let cubes = []
+            let positions = [0, 1.5, 0, -1.5]
+            for(let i=0; i<4; i++){
+                cubes.push(new THREE.Mesh(geometry, material))
+                scene.add(cubes[i])
+                cubes[i].position.x = positions[i]
+                cubes[i].position.y = positions[(i+1)%4]
+                
+            }
+
+            const loader = new THREE.TextureLoader()
+            loader.load( './src/img1.jpg', (texture) =>{
+                material.map = texture
+                animate()
+            } )
+            camera.position.z = 4
+            
+            let movement = 0
+            let scale = 1
+
+            const animate = function () {
+                requestAnimationFrame(animate)
+                renderer.render(scene, camera)
+                for(let i in cubes){
+                    cubes[i].rotation.x += movement
+                    cubes[i].rotation.y += Math.sign(movement) * 0.001
+                    cubes[i].rotation.z += Math.sign(movement) * 0.001
+                }
+            }
+            
+            var socket = io();
+            socket.on('move', async function(msg) {
+                movement = msg.movement
+            });
+
+            const reScale = function(){
+                if ( (cubes[0].scale.x >= 2.5 && scale > 0) || (cubes[0].scale.x <= 0 && scale < 0) ){
+                    return
+                }
+                const iterations = 30
+                let currIt = 0
+                const intervalId = setInterval( ()=>{
+                    for(let i in cubes){
+                        if ( (cubes[i].scale.x >= 2.5 && scale > 0) || (cubes[i].scale.x <= 0 && scale < 0) ){
+                            if ( cubes[i].scale.x < 0 ){
+                                for(let j in cubes){
+                                    cubes[j].scale.x = 0
+                                    cubes[j].scale.y = 0
+                                    cubes[j].scale.z = 0
+                                }
+                                
+                            }
+                            clearInterval(intervalId)
+                        }
+                        cubes[i].scale.x += scale / iterations
+                        cubes[i].scale.y += scale / iterations
+                        cubes[i].scale.z += scale / iterations
+                    }
+                    currIt++
+                    if ( currIt == iterations ){
+                        clearInterval(intervalId)
+                    }
+                }, 999 / iterations)
+            
+
+            }
+
+            socket.on('size', async function(msg) {
+                scale = msg.scale
+                reScale()
+            });
+
+
+            socket.on('texture', async function(msg) {
+                let textureSrc = msg.texture
+                console.log( textureSrc );
+                loader.load( textureSrc, (texture) =>{
+                    material.map = texture
+                    animate()
+                } )
+            });
+        </script>
+    </head>
+    <body>
+    </body>
+
+
+
+</html>
