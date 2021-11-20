@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+
+        .disable-dbl-tap-zoom {
+        touch-action: manipulation;
+        }
+        html, body{
+            overscroll-behavior-y: contain;   
+        }
+        body{
+            margin: 0px;
+            display: grid;
+            position:fixed;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            transform: rotate(-90deg);
+            margin-top: 20vh;
+            margin-left: -4vw;
+            -moz-transform: rotate(270deg);
+
+            width: 60vh;
+            height: 11vw;
+            background-color: rgb(20, 20, 20);
+            outline: none;
+            -webkit-transition: .1s;
+            transition: opacity .2s;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 4em;
+            height: 10em;
+            background: #000000;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            cursor: pointer;
+        }
+
+        .panel1{
+            width: 100vw;
+            height: 20vh;
+            background-color: rgb(48, 48, 48);
+        }
+
+        .panel4{
+            display: flex;
+            width: 100%;
+            height: 80vh;
+        }
+
+        .panel2{
+            background-color: rgb(100, 100, 96);
+            width: 70%;
+            height: 100%;
+            
+        }
+
+        .panel3{
+            background-color: rgb(100, 100, 96);
+            width: 30%;
+
+        }
+
+        #wheel{
+            width: 100%;
+            height: 100%;
+        }
+
+        #wheelContainer{
+            width: 25vw;
+            height: 25vw;
+        }
+
+
+    </style>
+
+</head>
+<body>
+
+    <div class="panel1"></div>
+    <div class="panel4">
+        <div class="panel2" id="panel2">
+            <div id="wheelContainer">
+                <img src="image.png" id="wheel" alt="">
+            </div>
+            
+        </div>
+        <div class="panel3" id="panel3">
+            <div class="slidecontainer">
+                <input type="range" min="0" max="100" value="0" class="slider miClase" id="myRange">
+            </div>
+        </div>
+    </div>
+
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script >
+        const socket = io();
+        
+        const div1 = document.getElementById("panel2")
+        const div2 = document.getElementById("panel3")
+
+        const wheel = document.getElementById("wheel")
+
+        let speedSlider = document.getElementById("myRange")
+        let lockSpeed = false;
+        let activeInterval = 0
+        speedSlider.oninput = function(){
+            clearInterval( activeInterval )
+            
+            updateColor()    
+        }
+
+        function updateColor(){
+            let val = speedSlider.value
+            socket.emit('speed', {speed: val})
+            let color = `rgb(${50*val/100},${50*(100-val)/100},0)`
+            speedSlider.style.background = "rgb(20, 20, 20)";
+            div1.style.background = color;
+            div2.style.background = color;
+        }
+
+        function decreaseSpeed(){
+            if ( !lockSpeed ){
+                activeInterval = setInterval( ()=>{
+                    updateColor()
+                    speedSlider.value -= 1;
+                    console.log('YO :D');
+                    if ( speedSlider.value == 0 ){
+                        clearInterval(activeInterval)
+                    }
+                }, 40)
+            }
+        }
+
+        speedSlider.onmouseup = decreaseSpeed
+        speedSlider.ontouchend = decreaseSpeed
+
+        let wheelContainer = document.getElementById("wheelContainer")
+
+        function moveWheel(e){
+            var rect = wheelContainer.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            let rad = wheel.offsetWidth/2
+            var y = e.clientY - rect.top;
+            x -= rad            
+            let angle = (Math.acos(x/rad) * 180/Math.PI)
+            let rotation = (angle - 90) * -1
+            wheel.style.transform = `rotate(${(rotation)}deg)`
+        }
+
+        wheelContainer.onmousemove = moveWheel
+        wheel.ontouchmove = moveWheel
+        wheelContainer.ontouchmove = moveWheel
+
+
+    </script>
+
+
+
+</body>
+</html>
